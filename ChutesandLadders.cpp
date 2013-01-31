@@ -131,9 +131,6 @@ void insert_player(gridspace *space, char symbol)
     
     if (x != string::npos)
        space->contents[x] = symbol; // Replacing with symbol
-    
-    else    
-        return;
      
 }
 
