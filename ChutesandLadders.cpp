@@ -94,16 +94,7 @@ player_data::player_data(gridspace *head, char choice) // Primary constructor
 {
      curr = head;
      symbol = choice;
-     int x;
-     if (curr != NULL) {
-        x = curr->contents.find(' '); // Finding first empty space in contents
-        if (x != string::npos)
-          curr->contents[x] = symbol; // Replacing with symbol
-        else {   
-           cout << "Something weird has happened...";
-           system("PAUSE");
-        }
-     }
+     insert_player(curr, symbol);
 }
 
 void player_data::do_move() // Movement function
