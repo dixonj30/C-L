@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+#include <limits>
+#include <ios>
 using namespace std;
 
 /********************
@@ -15,6 +17,8 @@ struct gridspace
      bool is_chute;
      int board_position; // Numeric position in the board
      gridspace *next_rung; // Pointer to next rung of a chute/ladder
+     char chute_symbol;
+     char ladder_symbol;
      gridspace();
 };
 
@@ -49,7 +53,7 @@ void populate_board(gridspace *head, int rows, int cols);
 
 
 
-int main() {
+int main() {      // Begin Main
   const int row_size = 8;
   const int col_size = 12;
   gridspace *head;
@@ -63,7 +67,7 @@ int main() {
   delete_board(head);
   system("PAUSE");
   return 0;
-}
+}                 // End Main
 
 
 
@@ -76,6 +80,8 @@ gridspace::gridspace() // Default constructor
 {
      next_space = NULL;
      is_chute = 0;
+     chute_symbol = '^';
+     ladder_symbol = 'v';
      contents = "[   ]";
      board_position = 0;
      next_rung = NULL;
@@ -167,7 +173,7 @@ void print_board(gridspace *head, int rows)
 {
      gridspace *temp;
      temp = head;
-     while(temp->next_space != NULL) {
+     while(temp->next_space != NULL) { // Traverse until the end of the list
         cout << endl;
         do { // Traverses the list until it hits the end of the row
            cout << temp->contents;                  
@@ -180,12 +186,12 @@ void print_board(gridspace *head, int rows)
      }
 }
 
-gridspace *traverse(gridspace *start, int num)
+gridspace *traverse(gridspace *start, int rows)
 {
      int i;
-     for (i = 0; i < num; i++) {
+     for (i = 0; i < rows; i++) {
          if (start->next_space == NULL)
-            return start;
+            return NULL;
          start = start->next_space;
      }
      return start;
@@ -196,23 +202,42 @@ void generate_ladder(gridspace *start, int rows)
      int i, middle;
      gridspace *temp;
      temp = start;   
-     
-     temp->is_chute = 1;
      middle = (temp->contents.length()) / 2;
-     temp->contents[middle] = 'v';
             
-     for (i = 0; i <= ((rand() % 3)+ 1); i++) { // creating between 3 and 5 rungs
-         temp->next_rung = traverse(temp, rows);
-         // Pointing next_rung to the space above temp
-         temp = temp->next_rung;
-         
-         if (temp == NULL) // shouldn't happen
-            return;
-         
-         temp->contents[middle] = 'v';
+     for (i = 0; i <= ((rand() % 3)+ 1); i++) { // creating between 2 and 5 rungs
+         temp->contents[middle] = temp->ladder_symbol;
          temp->is_chute = 1;
-      }
+         temp->next_rung = traverse(temp, rows); // Pointing next_rung to the 
+                                                 // space above temp
+         if (temp->next_rung == NULL)
+            break;
+         temp = temp->next_rung;
+     }
+      
+      temp->contents[middle] = ' '; /* Just like for Chutes, removing the bottom 
+                                       symbol to make output more intutive */
 }
+
+void generate_chute(gridspace *start, int rows)
+{
+     int i, middle;
+     gridspace *temp, *holder;
+     temp = start;
+     holder = NULL;
+     middle = (temp->contents.length()) / 2;
+     
+     for (i = 0; i <= ((rand() % 3) + 1); i++) { // Creating 2 to 5 chutes
+         temp->is_chute = 1;
+         holder = traverse(temp, rows);
+         if (holder == NULL)
+            break;
+         holder->next_rung = temp;
+         temp = holder;
+         temp->contents[middle] = temp->chute_symbol;
+     }
+     /* Note: The top of a chute will still be considered a chute, but will not
+              have the chute symbol. This is for more intuitive output */
+}                               
 
 void populate_board(gridspace *head, int rows, int cols)
 {
@@ -229,12 +254,13 @@ void populate_board(gridspace *head, int rows, int cols)
          if (curr_space->is_chute)  // If the space we're looking at is already
             continue;              // a part of a chute or ladder
          
-         roll = rand() % (rows * 3);
+         roll = rand() % (rows * 5);
          
          
          if (roll == 0)
             generate_ladder(curr_space, rows);
-         
+         if (roll == 1)
+            generate_chute(curr_space, rows);
      }
 }
                 
