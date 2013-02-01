@@ -49,7 +49,6 @@ class player_data {
  * Function Prototypes *
  ***********************/
 
-void play_game(player_data *players[], int num_players);
 gridspace *create_board(int rows, int cols); // Creates the board
 void delete_board(gridspace *head); // Recursive cleanup function
 void print_board(gridspace *head, int rows); // Prints the board
