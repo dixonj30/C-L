@@ -32,6 +32,7 @@ struct gridspace
 class player_data {
       public:
              void do_move(int num_moves); // Moves a player num_move spaces
+             void do_move_chute(); // Moves player through a chute or ladder
              gridspace *get_space(); // Returns curr
              char get_symbol(); // Return the symbol
              void set_space(gridspace *setter); // Sets players space
@@ -64,7 +65,6 @@ int main() {      // Begin Main
   /*******************
    * Initializations *
    *******************/
-  std::string symbol_choices = "!@#$%&*";
   const int num_players = 2;
   const int row_size = 8;
   const int col_size = 12;
@@ -74,25 +74,21 @@ int main() {      // Begin Main
   player_data *players[num_players];
   gridspace *head;
   srand(time(NULL));
-  
-  head = create_board(row_size, col_size);
-  populate_board(head, row_size, col_size);
- /* 
-  for (i = 0; i < num_players; i++)
-  {
-     players[i] = new player_data(head, (char) i); // Generating the players
-  }    
- */
- players[0] = new player_data(head, '@');
- players[1] = new player_data(head, '#');
+   
   while (!stop)
   {
+     head = create_board(row_size, col_size);
+     populate_board(head, row_size, col_size);
+     
+     for (i = 0; i < num_players; i++)
+         players[i] = new player_data(head, ('1' + i)); // Generating the player
+  
      play_game(players, num_players, head, row_size);
      cout << endl << "Y to play another game or any key to exit: ";
      cin.clear();
      cin.ignore(numeric_limits<streamsize>::max(), '\n');
      choice = cin.get();
-     switch(choice)
+     switch(choice)     
      {
         case 'y':
         case 'Y':
@@ -100,12 +96,12 @@ int main() {      // Begin Main
         default:
              stop = 1;
      }
+     for (i = 0; i < num_players; i++)
+      delete players[i];
+     delete_board(head);
   } 
   
   cout << endl << "Exiting game... " << endl;           
-  for (i = 0; i < num_players; i++)
-      delete players[i];
-  delete_board(head);
   system("PAUSE");
   return 0;
 }                 // End Main
@@ -176,17 +172,27 @@ void player_data::do_move(int num_moves) // Movement function
      
      for (i = 0; i < num_moves; i++)
      {
-         if (curr == NULL)
-            return;
+         if (curr->next_space == NULL)
+            break;
          curr = curr->next_space;
      }
      
-     if (curr == NULL)
-        return;
      curr->insert_player(symbol);
 
 }
- 
+
+void player_data::do_move_chute()
+{
+     curr->remove_player(symbol);
+     
+     while(curr->next_rung != NULL)
+        curr = curr->next_rung;
+     
+     curr->insert_player(symbol);
+}
+     
+     
+
 gridspace *player_data::get_space()
 {
      return curr;
@@ -219,15 +225,13 @@ gridspace *create_board(int rows, int cols)
      head = new gridspace;
   
      temp = head;
- 
-     for (i = 0; i < (rows * cols); i++) 
+     temp->board_position = 0;
+     for (i = 1; i < (rows * cols); i++) 
      {
-        temp->board_position = i;
         temp->next_space = new gridspace;
         temp = temp->next_space;
+        temp->board_position = i;
      }
-  
-     temp->board_position = i;
      return head;
 }    
 
@@ -250,8 +254,8 @@ void print_board(gridspace *head, int rows)
         do { // Traverses the list until it hits the end of the row
            cout << temp->contents;                  
            
-           if (temp->next_space == NULL) // It should never hit this             
-              break;
+           if (temp->next_space == NULL)             
+              return;
            
            temp = temp->next_space;
            } while((temp->board_position % rows) != 0);     
@@ -303,17 +307,24 @@ void generate_chute(gridspace *start, int rows)
      middle = (temp->contents.length()) / 2;
      
      for (i = 0; i <= ((rand() % 3) + 1); i++) 
-     { // Creating 2 to 5 chutes
+     { // Creating 2 to 5 chutes                
          temp->is_chute = 1;
          holder = traverse(temp, rows);
+         
          if (holder == NULL)
-            break;
+            return;
+         
          holder->next_rung = temp;
          temp = holder;
+         
+         if (temp->next_space == NULL) // Special case: this is the final square
+            return;
+               
          temp->contents[middle] = temp->chute_symbol;
      }
      /* Note: The top of a chute will still be considered a chute, but will not
               have the chute symbol. This is for more intuitive output */
+     temp->is_chute = 1;
 }                               
 
 void populate_board(gridspace *head, int rows, int cols)
@@ -333,7 +344,7 @@ void populate_board(gridspace *head, int rows, int cols)
          if (curr_space->is_chute)  // If the space we're looking at is already
             continue;              // a part of a chute or ladder
          
-         roll = rand() % (rows * 5);
+         roll = rand() % (rows * 4);
          // 2/5ths of the rows will have a chute or a ladder, on average
          
          if (roll == 0)
@@ -394,20 +405,13 @@ void play_game(player_data *players[], int num_players, gridspace *head,
      
      // Checking if on a chute or ladder
      curr_space = players[curr_player]->get_space();
-     if (curr_space->is_chute)
+     if ((curr_space->is_chute) && (curr_space->next_rung != NULL))
      {
-        if (curr_space->next_rung == NULL)
-           break;
-        
         cout << endl << "You've landed on a special space!" << endl;
         system("PAUSE"); 
-        curr_space->remove_player(players[curr_player]->get_symbol());
-        while (curr_space->next_rung != NULL)
-        {
-              players[curr_player]->set_space(curr_space->next_rung);
-              curr_space = curr_space->next_rung;
-        }
-        curr_space->insert_player(players[curr_player]->get_symbol());
+        
+        players[curr_player]->do_move_chute();
+        
         print_board(head, row_size);
         cout << endl;
      }
@@ -415,7 +419,7 @@ void play_game(player_data *players[], int num_players, gridspace *head,
      //Checking for game over
      if (curr_space->next_space == NULL)
      {
-        cout << endl << "Congratulations, Player " << curr_player
+        cout << endl << "Congratulations, Player " << curr_player + 1
              << " has won the game!" << endl << "The game lasted "
              << turn << " turns.";
         quit = 1;
