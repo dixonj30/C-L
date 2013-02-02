@@ -73,6 +73,10 @@ int main() {      // Begin Main
   player_data *players[num_players];
   gridspace *head;
   srand(time(NULL));
+  
+  /*****************
+   * Main game loop*
+   *****************/
    
   while (!stop)
   {
@@ -98,6 +102,7 @@ int main() {      // Begin Main
      for (i = 0; i < num_players; i++)
       delete players[i];
      delete_board(head);
+     head = NULL;
   } 
   
   cout << endl << "Exiting game... " << endl;           
@@ -149,7 +154,7 @@ void gridspace::remove_player(char symbol)
  ***************************/
 
 
-player_data::player_data()
+player_data::player_data() // Default constructor
 {
      curr = NULL;
      symbol = '@';
@@ -169,7 +174,7 @@ void player_data::do_move(int num_moves) // Movement function
      
      curr->remove_player(symbol);
      
-     for (i = 0; i < num_moves; i++)
+     for (i = 0; i < num_moves; i++) // Traversing through spaces
      {
          if (curr->next_space == NULL)
             break;
@@ -344,7 +349,7 @@ void populate_board(gridspace *head, int rows, int cols)
             continue;              // a part of a chute or ladder
          
          roll = rand() % (rows * 4);
-         // 2/5ths of the rows will have a chute or a ladder, on average
+         // 1/2 of the rows will have a chute or a ladder, on average
          
          if (roll == 0)
             generate_ladder(curr_space, rows);
