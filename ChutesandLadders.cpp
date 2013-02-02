@@ -100,7 +100,10 @@ int main() {      // Begin Main
              stop = 1;
      }
      for (i = 0; i < num_players; i++)
+     {
       delete players[i];
+      players[i] = null;
+     }
      delete_board(head);
      head = NULL;
   } 
