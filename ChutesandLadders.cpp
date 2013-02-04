@@ -102,7 +102,7 @@ int main() {      // Begin Main
      for (i = 0; i < num_players; i++)
      {
       delete players[i];
-      players[i] = null;
+      players[i] = NULL;
      }
      delete_board(head);
      head = NULL;
@@ -297,7 +297,10 @@ void generate_ladder(gridspace *start, int rows)
          temp->next_rung = traverse(temp, rows); // Pointing next_rung to the 
                                                  // space above temp
          if (temp->next_rung == NULL)
+         {
+            temp->contents[middle] = ' ';
             break;
+         }
          temp = temp->next_rung;
      }
       
